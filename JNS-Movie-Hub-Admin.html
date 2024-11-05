@@ -1,0 +1,589 @@
+<html><head><base href="/">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JNS Movie Hub Admin Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #1f1f1f;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: #28292d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #45f3ff;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #45f3ff;
+        }
+
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            padding: 10px;
+        }
+
+        .user-card {
+            background: #28292d;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #45f3ff;
+            transition: transform 0.3s;
+            width: 100%;
+        }
+
+        .user-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .user-card h3 {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-card h3 .status {
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+
+        .user-details {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .user-details.show {
+            display: block;
+        }
+
+        .user-details p {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .status.active {
+            background: #4CAF50;
+        }
+
+        .status.inactive {
+            background: #f44336;
+        }
+
+        .status.verified-symbol {
+            background: none;
+            color: #4CAF50;
+            margin-left: 5px;
+            font-size: 1.2em;
+        }
+
+        .status.unverified-symbol {
+            background: none;
+            color: #f44336;
+            margin-left: 5px;
+            font-size: 1.2em;
+        }
+
+        .loader {
+            text-align: center;
+            padding: 20px;
+            color: #45f3ff;
+        }
+
+        .subscription-type {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .subscription-details {
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .plan-details {
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .plan-name {
+            color: #45f3ff;
+            font-weight: bold;
+        }
+
+        .amount {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .expiration {
+            color: #ff9800;
+        }
+
+        .payment-proof {
+            margin-top: 10px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .payment-proof img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 1px solid #45f3ff;
+            transition: opacity 0.3s ease;
+        }
+
+        .payment-proof.hidden img {
+            display: none;
+        }
+
+        .payment-proof p {
+            color: #ff9800;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .toggle-proof {
+            background: #45f3ff;
+            color: #1f1f1f;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+
+        .toggle-proof:hover {
+            opacity: 0.9;
+        }
+
+        .verify-button, .remove-btn {
+            background: #45f3ff;
+            color: #1f1f1f;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .verify-button.remove-btn {
+            background: #f44336;
+            color: #fff;
+            margin-right: 5px;
+        }
+
+        .verify-button.remove-btn:last-child {
+            margin-right: 0;
+        }
+
+        .verify-button:hover, .remove-btn:hover {
+            opacity: 0.9;
+        }
+
+        .subscription-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #333;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .subscription-controls select,
+        .subscription-controls button {
+            width: 100%;
+            padding: 8px;
+            margin: 5px;
+            border-radius: 4px;
+            border: 1px solid #45f3ff;
+            background: #28292d;
+            color: #fff;
+        }
+
+        .subscription-controls button {
+            background: #45f3ff;
+            color: #1f1f1f;
+            cursor: pointer;
+        }
+
+        .subscription-controls button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>JNS Movie Hub Admin Page</h1>
+        </div>
+        <div class="users-grid" id="usersGrid">
+            <div class="loader">Loading users data...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+        import { getStorage, ref as storageRef, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkN_hWAqlSzbfNTDlntRtW-3TFBISjiC4",
+            authDomain: "jns-movie-hub.firebaseapp.com",
+            databaseURL: "https://jns-movie-hub-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "jns-movie-hub",
+            storageBucket: "jns-movie-hub.appspot.com",
+            messagingSenderId: "736875037088",
+            appId: "1:736875037088:web:edda79d22461a77c2b24c5",
+            measurementId: "G-ED5YM81XTF"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const storage = getStorage(app);
+        const usersRef = ref(db, 'users');
+        const subscriptionsRef = ref(db, 'subscriptions');
+        const verificationStatusRef = ref(db, 'verification_status');
+        const usedReferencesRef = ref(db, 'used_references');
+
+        function formatDate(timestamp) {
+            return new Date(timestamp).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        async function createUserCard(username, userData, subscriptionData, referenceData, verificationStatus) {
+            const subscriptionType = subscriptionData ? subscriptionData.type : 'No subscription';
+            const isActive = subscriptionData ? subscriptionData.status === 'active' : false;
+            const referenceNumber = subscriptionData ? subscriptionData.referenceNumber || 'N/A' : 'N/A';
+
+            const amount = subscriptionData ? subscriptionData.amount || 'N/A' : 'N/A';
+            const planName = subscriptionData ? subscriptionData.plan || subscriptionType : 'No Plan';
+            const startTime = subscriptionData ? formatDate(subscriptionData.startTime) : 'N/A';
+            const expirationTime = subscriptionData ? formatDate(subscriptionData.expirationTime) : 'N/A';
+            
+            const isVerified = verificationStatus && verificationStatus.verified;
+            const verificationStatusHtml = `
+                <span class="status ${isVerified ? 'verified-symbol' : 'unverified-symbol'}">
+                    ${isVerified ? '✓' : '✗'}
+                </span>
+            `;
+            let paymentProofHtml = '';
+            if (username === 'eee') {
+                paymentProofHtml = `
+                    <div class="payment-proof">
+                        <div>
+                            <button class="toggle-proof" onclick="togglePaymentProof(this)">Show/Hide Proof</button>
+                            <button class="verify-button" onclick="toggleVerification(this)">Verify</button>
+                            <button class="verify-button remove-btn" onclick="removeSubscription('${username}')">Remove Subscription</button>
+                            <button class="verify-button remove-btn" onclick="deleteUser('${username}')">Delete User</button>
+                        </div>
+                        <div class="verification-status"></div>
+                        <img src="https://firebasestorage.googleapis.com/v0/b/jns-movie-hub.appspot.com/o/payment_proofs%2Feee_1730622911231.jpg?alt=media&token=de270d2c-1c1a-4665-9235-475a0169213f" alt="Payment proof for ${username}" width="300" height="200">
+                        <p>Payment Proof</p>
+                    </div>
+                `;
+            } else {
+                try {
+                    const paymentProofRef = storageRef(storage, `payment_proofs/${username}`);
+                    const paymentProofUrl = await getDownloadURL(paymentProofRef);
+                    paymentProofHtml = `
+                        <div class="payment-proof">
+                            <div>
+                                <button class="toggle-proof" onclick="togglePaymentProof(this)">Show/Hide Proof</button>
+                                <button class="verify-button" onclick="toggleVerification(this)">Verify</button>
+                                <button class="verify-button remove-btn" onclick="removeSubscription('${username}')">Remove Subscription</button>
+                                <button class="verify-button remove-btn" onclick="deleteUser('${username}')">Delete User</button>
+                            </div>
+                            <div class="verification-status"></div>
+                            <img src="${paymentProofUrl}" alt="Payment proof for ${username}" width="300" height="200">
+                            <p>Payment Proof</p>
+                        </div>
+                    `;
+                } catch (error) {
+                    paymentProofHtml = `
+                        <div class="payment-proof">
+                            <div>
+                                <button class="verify-button" onclick="toggleVerification(this)">Verify</button>
+                                <button class="verify-button remove-btn" onclick="removeSubscription('${username}')">Remove Subscription</button>
+                                <button class="verify-button remove-btn" onclick="deleteUser('${username}')">Delete User</button>
+                            </div>
+                            <div class="verification-status"></div>
+                        </div>
+                    `;
+                    console.log(`No payment proof found for ${username}`);
+                }
+            }
+
+            const subscriptionControlsHtml = `
+                <div class="subscription-controls">
+                    <h4>Manage Subscription</h4>
+                    <select id="plan-${username}">
+                        <option value="daily">Daily (₱5)</option>
+                        <option value="weekly">Weekly (₱35)</option>
+                        <option value="monthly">Monthly (₱100)</option>
+                    </select>
+                    <button onclick="activateSubscription('${username}')">Activate Subscription</button>
+                </div>
+            `;
+
+            return `
+                <div class="user-card">
+                    <h3 onclick="toggleUserDetails(this)">
+                        ${username}
+                        <span>
+                            <span class="status ${isActive ? 'active' : 'inactive'}">
+                                ${isActive ? 'Active' : 'Inactive'}
+                            </span>
+                            ${verificationStatusHtml}
+                        </span>
+                    </h3>
+                    <div class="user-details">
+                        
+                        <p>
+                            <span>Reference Number:</span>
+                            <span>${referenceNumber}</span>
+                        </p>
+                        <div class="subscription-details">
+                            <div class="plan-details">
+                                <span>Plan:</span>
+                                <span class="plan-name">${planName}</span>
+                                <span>Amount:</span>
+                                <span class="amount">${amount}</span>
+                                <span>Start Time:</span>
+                                <span>${startTime}</span>
+                                <span>Expiration:</span>
+                                <span class="expiration">${expirationTime}</span>
+                            </div>
+                        </div>
+                        ${paymentProofHtml}
+                        ${subscriptionControlsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.togglePaymentProof = function(button) {
+            const proofContainer = button.closest('.payment-proof');
+            proofContainer.classList.toggle('hidden');
+        };
+
+        window.toggleUserDetails = function(element) {
+            const allDetails = document.querySelectorAll('.user-details.show');
+            allDetails.forEach(detail => {
+                if (detail !== element.nextElementSibling) {
+                    detail.classList.remove('show');
+                }
+            });
+
+            const detailsDiv = element.nextElementSibling;
+            detailsDiv.classList.toggle('show');
+        };
+
+        window.toggleVerification = function(button) {
+            const paymentProof = button.closest('.payment-proof');
+            const verificationStatus = paymentProof.querySelector('.verification-status');
+            const userCard = button.closest('.user-card');
+            const userHeader = userCard.querySelector('h3');
+            const username = userHeader.childNodes[0].textContent.trim();
+            
+            const existingStatus = userHeader.querySelector('.status.verified-symbol, .status.unverified-symbol');
+            const isVerified = !(existingStatus && existingStatus.classList.contains('verified-symbol'));
+            if (existingStatus) {
+                existingStatus.remove();
+            }
+            
+            const newStatusSpan = document.createElement('span');
+            newStatusSpan.className = `status ${isVerified ? 'verified-symbol' : 'unverified-symbol'}`;
+            newStatusSpan.textContent = isVerified ? '✓' : '✗';
+            
+            const statusContainer = userHeader.querySelector('span');
+            statusContainer.appendChild(newStatusSpan);
+    
+            const userVerificationRef = ref(db, `verification_status/${username}`);
+            set(userVerificationRef, {
+                verified: isVerified,
+                timestamp: Date.now()
+            });
+        };
+
+        window.activateSubscription = function(username) {
+            const planSelect = document.getElementById(`plan-${username}`);
+            const planType = planSelect.value;
+    
+            let duration, amount;
+            switch(planType) {
+                case 'daily':
+                    duration = 24 * 60 * 60 * 1000;
+                    amount = 5;
+                    break;
+                case 'weekly':
+                    duration = 7 * 24 * 60 * 60 * 1000;
+                    amount = 35;
+                    break;
+                case 'monthly':
+                    duration = 30 * 24 * 60 * 60 * 1000;
+                    amount = 100;
+                    break;
+            }
+    
+            const startTime = Date.now();
+            const expirationTime = startTime + duration;
+    
+            const subscriptionData = {
+                type: planType,
+                status: 'active',
+                plan: planType.charAt(0).toUpperCase() + planType.slice(1),
+                amount: `₱${amount}`,
+                startTime: startTime,
+                expirationTime: expirationTime,
+                referenceNumber: `REF${Date.now()}`
+            };
+    
+            const userSubscriptionRef = ref(db, `subscriptions/${username}`);
+            set(userSubscriptionRef, subscriptionData)
+                .then(() => {
+                    alert(`Subscription activated for ${username}`);
+                })
+                .catch((error) => {
+                    console.error('Error activating subscription:', error);
+                    alert('Error activating subscription');
+                });
+        };
+
+        window.removeSubscription = function(username) {
+            if (!confirm(`Are you sure you want to remove the subscription for ${username}?`)) {
+                return;
+            }
+
+            const userSubscriptionRef = ref(db, `subscriptions/${username}`);
+            set(userSubscriptionRef, null)
+                .then(() => {
+                    alert(`Subscription removed for ${username}`);
+                })
+                .catch((error) => {
+                    console.error('Error removing subscription:', error);
+                    alert('Error removing subscription');
+                });
+        };
+
+        window.deleteUser = function(username) {
+            if (!confirm(`Are you sure you want to delete the user ${username}? This action cannot be undone.`)) {
+                return;
+            }
+
+            const userRef = ref(db, `users/${username}`);
+            const userSubscriptionRef = ref(db, `subscriptions/${username}`);
+            const userVerificationRef = ref(db, `verification_status/${username}`);
+            const userReferencesRef = ref(db, `used_references/${username}`);
+
+            Promise.all([
+                set(userRef, null),
+                set(userSubscriptionRef, null),
+                set(userVerificationRef, null),
+                set(userReferencesRef, null)
+            ])
+            .then(() => {
+                alert(`User ${username} has been deleted successfully`);
+            })
+            .catch((error) => {
+                console.error('Error deleting user:', error);
+                alert('Error deleting user');
+            });
+        };
+
+        onValue(usersRef, (snapshot) => {
+            const usersGrid = document.getElementById('usersGrid');
+            
+            onValue(subscriptionsRef, async (subscriptionSnapshot) => {
+                onValue(verificationStatusRef, async (verificationSnapshot) => {
+                    onValue(usedReferencesRef, async (referenceSnapshot) => {
+                        usersGrid.innerHTML = '';    
+
+                        if (snapshot.exists()) {
+                            const users = snapshot.val();
+                            const subscriptions = subscriptionSnapshot.val() || {};
+                            const usedReferences = referenceSnapshot.val() || {};
+                            const verificationStatuses = verificationSnapshot.val() || {};
+
+                            // Create array of users with their data
+                            let usersArray = Object.entries(users).map(([username, userData]) => {
+                                const userSubscription = subscriptions[username];
+                                const isActive = userSubscription ? userSubscription.status === 'active' : false;
+                                return {
+                                    username,
+                                    userData,
+                                    userSubscription,
+                                    userReference: usedReferences[username],
+                                    userVerification: verificationStatuses[username],
+                                    isActive
+                                };
+                            });
+
+                            // Sort users - active users first
+                            usersArray.sort((a, b) => {
+                                if (a.isActive === b.isActive) return 0;
+                                return a.isActive ? -1 : 1;
+                            });
+
+                            // Create cards in sorted order
+                            for (const userData of usersArray) {
+                                const userCard = await createUserCard(
+                                    userData.username, 
+                                    userData.userData, 
+                                    userData.userSubscription, 
+                                    userData.userReference, 
+                                    userData.userVerification
+                                );
+                                usersGrid.insertAdjacentHTML('beforeend', userCard);
+                            }
+                        } else {
+                            usersGrid.innerHTML = '<div class="loader">No users found</div>';
+                        }
+                    });
+                });
+            });
+        }, (error) => {
+            console.error(error);
+            document.getElementById('usersGrid').innerHTML = 
+                '<div class="loader">Error loading users data</div>';
+        });
+    </script>
+</body>
+</html>
